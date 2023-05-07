@@ -68,6 +68,7 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
         if (allowance > 0) {
             const transferValue = BigInt(value) > BigInt(allowance) ? allowance : value;
             const txHash = await contractInstance.methods.transferFrom(accountFrom, accountTo, transferValue).send({ from: account1 })
+                // returns the transaction hash
                 .on('transactionHash', (hash) => {
                     return hash;
                 })
@@ -77,7 +78,18 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
 
 async function loop() {
     for (let i = 0; i < 100; i++) {
-        await fuzzUsdc(account1, account2, contractInstance);
+        // fuzzUsdc now returns the transaction hash
+        var txHash = await fuzzUsdc(account1, account2, contractInstance);
+        web3.eth.getTransaction(txHash, (error, tx) => {
+            if (error) {
+                console.log(error)
+            } else {
+                // tx.input is the call data
+                var txData = tx.input
+                // adds a newline to it
+                fs.appendFileSync('results.txt', txData + '\n')
+            }
+        })
         // Log or store the transaction data and state changes here
         console.log(`Iteration ${i}`);
     }
