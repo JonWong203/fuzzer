@@ -55,7 +55,6 @@ async function initialize() {
     // 0 gas?
 }
 
-
 async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
     const action = ['transfer', 'approve', 'transferFrom'][Math.floor(Math.random() * 3)];
     const value = web3.utils.toWei(Math.floor(Math.random() * 1000).toString(), 'ether');
@@ -68,7 +67,10 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
         const allowance = await contractInstance.methods.allowance(accountFrom, accountTo).call();
         if (allowance > 0) {
             const transferValue = BigInt(value) > BigInt(allowance) ? allowance : value;
-            const txHash = await contractInstance.methods.transferFrom(accountFrom, accountTo, transferValue).send({ from: account1 });
+            const txHash = await contractInstance.methods.transferFrom(accountFrom, accountTo, transferValue).send({ from: account1 })
+                .on('transactionHash', (hash) => {
+                    return hash;
+                })
         }
     }
 }
