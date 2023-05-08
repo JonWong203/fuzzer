@@ -30,21 +30,25 @@ async function initialize() {
     // account1 = '0x83643Fd7cc5e3ED4Bae1298B1a96A4C29818DD5d';
     // account2 = '0xd1A78aFCDc6ed3Cc2acEDfEe8858DE84626305a1';
 
-    const account1 = (await web3.eth.getAccounts())[0];
-    const account2 = (await web3.eth.getAccounts())[1];
+    var account1;
+    var account2;
+
+    await web3.eth.personal.newAccount('password123').then((address) => {
+        account1 = address
+        addressToPassword.set(address, 'password123')
+    }); // Prints the new account address
+
+    await web3.eth.personal.newAccount('hello').then((address) => {
+        account2 = address
+        addressToPassword.set(address, 'hello')
+    })
+
 
     console.log(account1)
     console.log(account2)
 
-    await web3.eth.personal.newAccount('password123').then((address) => {
-        console.log(address)
-        addressToPassword.set(address, 'password123')
-    }); // Prints the new account address
-
-    await web3.eth.personal.newAccount('hello').then((addresss) => {
-        addressToPassword.set(address, 'hello')
-    })
-
+    await web3.eth.personal.unlockAccount(account1, 'password123', 0);
+    await web3.eth.personal.unlockAccount(account2, 'hello', 0);
 
     // Load the smart contract ABI and bytecode
     const abi = JSON.parse(fs.readFileSync('ABI_ERC20.json', 'utf8'));
@@ -56,12 +60,12 @@ async function initialize() {
     usdcContract = await new web3.eth.Contract(abi);
     const options = {
         data: bytecode,
-        gas: 0
+        gas: 300000
     }
 
     const arguments = [web3.utils.toWei('10000', 'ether'), 'MyToken', 'MYT'];
     contractInstance = await usdcContract.deploy(options, arguments)
-        .send({ from: account1, gas: '0' });
+        .send({ from: account1, gas: '300000' });
     console.log('reached');
 
     // Deploy the smart contract
@@ -72,15 +76,24 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
     const action = ['transfer', 'approve', 'transferFrom'][Math.floor(Math.random() * 3)];
     const value = web3.utils.toWei(Math.floor(Math.random() * 1000).toString(), 'ether');
 
+    console.log(action)
+
     if (action === 'transfer') {
-        const txHash = web3.eth.personal.unlockAccount(accountFrom, map.get(accountFrom), unlockDuration)
+        console.log("here")
+        const txHash = web3.eth.personal.unlockAccount(accountFrom, map.get(accountFrom), 60)
             .then(() => {
                 contractInstance.methods.transfer(accountTo, value).send({ from: accountFrom });
             })
             .catch(console.error);
     } else if (action === 'approve') {
-        const txHash = await contractInstance.methods.approve(accountTo, value).send({ from: accountFrom });
+        console.log(83)
+        const txHash = web3.eth.personal.unlockAccount(accountFrom, map.get(accountFrom), 60)
+            .then(() => {
+                contractInstance.methods.approve(accountTo, value).send({ from: accountFrom });
+            })
+            .catch(console.error);
     } else if (action === 'transferFrom') {
+        console.log(90)
         const allowance = await contractInstance.methods.allowance(accountFrom, accountTo).call();
         if (allowance > 0) {
             const transferValue = BigInt(value) > BigInt(allowance) ? allowance : value;
