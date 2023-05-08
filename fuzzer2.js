@@ -32,6 +32,10 @@ async function initialize() {
 
     var account1;
     var account2;
+    const accounts = await web3.eth.getAccounts();
+    default_account = accounts[0];
+    balance = await web3.eth.getBalance(default_account);
+    console.log("Balance: " + balance);
 
     await web3.eth.personal.newAccount('password123').then((address) => {
         account1 = address
@@ -49,6 +53,12 @@ async function initialize() {
 
     await web3.eth.personal.unlockAccount(account1, 'password123', 0);
     await web3.eth.personal.unlockAccount(account2, 'hello', 0);
+
+    // send ethereum
+    const amountToSend = web3.utils.toWei('1', 'ether');
+    await web3.eth.personal.unlockAccount(default_account, '', 0);
+    await web3.eth.sendTransaction({ from: default_account, to: account1, value: amountToSend });
+    await web3.eth.sendTransaction({ from: default_account, to: account2, value: amountToSend });
 
     // Load the smart contract ABI and bytecode
     const abi = JSON.parse(fs.readFileSync('ABI_ERC20.json', 'utf8'));
@@ -107,7 +117,7 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
 }
 
 async function loop() {
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
         // fuzzUsdc now returns the transaction hash
         var txHash = await fuzzUsdc(account1, account2, contractInstance);
         web3.eth.getTransaction(txHash, (error, tx) => {
