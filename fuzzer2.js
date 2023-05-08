@@ -11,6 +11,8 @@ var account2;
 var contractAddress;
 var contractInstance;
 
+const addressToPassword = new Map();
+
 function readFile(callback) {
     (async () => {
         fs.readFile('bytecode.txt', 'utf8', (error, data) => {
@@ -32,6 +34,17 @@ async function initialize() {
     const account2 = (await web3.eth.getAccounts())[1];
 
     console.log(account1)
+    console.log(account2)
+
+    await web3.eth.personal.newAccount('password123').then((address) => {
+        console.log(address)
+        addressToPassword.set(address, 'password123')
+    }); // Prints the new account address
+
+    await web3.eth.personal.newAccount('hello').then((addresss) => {
+        addressToPassword.set(address, 'hello')
+    })
+
 
     // Load the smart contract ABI and bytecode
     const abi = JSON.parse(fs.readFileSync('ABI_ERC20.json', 'utf8'));
@@ -43,12 +56,12 @@ async function initialize() {
     usdcContract = await new web3.eth.Contract(abi);
     const options = {
         data: bytecode,
-        gas: 3000000
+        gas: 0
     }
 
     const arguments = [web3.utils.toWei('10000', 'ether'), 'MyToken', 'MYT'];
     contractInstance = await usdcContract.deploy(options, arguments)
-        .send({ from: account1, gas: '3000000' });
+        .send({ from: account1, gas: '0' });
     console.log('reached');
 
     // Deploy the smart contract
@@ -60,7 +73,11 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
     const value = web3.utils.toWei(Math.floor(Math.random() * 1000).toString(), 'ether');
 
     if (action === 'transfer') {
-        const txHash = await contractInstance.methods.transfer(accountTo, value).send({ from: accountFrom });
+        const txHash = web3.eth.personal.unlockAccount(accountFrom, map.get(accountFrom), unlockDuration)
+            .then(() => {
+                contractInstance.methods.transfer(accountTo, value).send({ from: accountFrom });
+            })
+            .catch(console.error);
     } else if (action === 'approve') {
         const txHash = await contractInstance.methods.approve(accountTo, value).send({ from: accountFrom });
     } else if (action === 'transferFrom') {
