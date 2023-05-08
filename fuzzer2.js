@@ -25,11 +25,13 @@ function readFile(callback) {
 
 async function initialize() {
     // Set up your testing accounts (use pre-funded accounts from your geth client)
-    account1 = '0x83643Fd7cc5e3ED4Bae1298B1a96A4C29818DD5d';
-    account2 = '0xd1A78aFCDc6ed3Cc2acEDfEe8858DE84626305a1';
+    // account1 = '0x83643Fd7cc5e3ED4Bae1298B1a96A4C29818DD5d';
+    // account2 = '0xd1A78aFCDc6ed3Cc2acEDfEe8858DE84626305a1';
 
-    // const account1 = (await web3.eth.getAccounts())[0];
-    // const account2 = (await web3.eth.getAccounts())[1];
+    const account1 = (await web3.eth.getAccounts())[0];
+    const account2 = (await web3.eth.getAccounts())[1];
+
+    console.log(account1)
 
     // Load the smart contract ABI and bytecode
     const abi = JSON.parse(fs.readFileSync('ABI_ERC20.json', 'utf8'));
@@ -41,14 +43,12 @@ async function initialize() {
     usdcContract = await new web3.eth.Contract(abi);
     const options = {
         data: bytecode,
-        gas: 10000000
+        gas: 3000000
     }
 
-    console.log(options.data)
-
-    const arguments = [web3.utils.toWei('0', 'ether')]
+    const arguments = [web3.utils.toWei('10000', 'ether'), 'MyToken', 'MYT'];
     contractInstance = await usdcContract.deploy(options, arguments)
-        .send({ from: account1, gas: '1000000' });
+        .send({ from: account1, gas: '3000000' });
     console.log('reached');
 
     // Deploy the smart contract
