@@ -84,7 +84,6 @@ async function initialize() {
     .on('receipt', function (receipt) {
         console.log(receipt);
         // Call loop() function after the contract is deployed
-        loop(contractInstance); // Pass contractInstance to loop
     })
     .on('error', function (error) {
         console.error(error);
@@ -94,6 +93,7 @@ async function initialize() {
     });
 
 console.log('reached');
+loop(contractInstance); // Pass contractInstance to loop
 return [default_account, account1, contractInstance];
 }
 
