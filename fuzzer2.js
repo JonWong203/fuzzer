@@ -37,7 +37,6 @@ async function initialize() {
     default_account = accounts[0];
     console.log(default_account)
     balance = await web3.eth.getBalance(default_account);
-    console.log("Balance: " + balance);
 
     await web3.eth.personal.newAccount('password123').then((address) => {
         account1 = address
@@ -48,10 +47,6 @@ async function initialize() {
         account2 = address
         addressToPassword.set(address, 'hello')
     })
-
-
-    console.log(account1)
-    console.log(account2)
 
     await web3.eth.personal.unlockAccount(account1, 'password123', 86400);
     await web3.eth.personal.unlockAccount(account2, 'hello', 86400);
@@ -77,63 +72,67 @@ async function initialize() {
 
     const arguments = [web3.utils.toWei('10000', 'ether'), 'MyToken', 'MYT'];
     contractInstance = await usdcContract.deploy(options, arguments)
-    .send({ from: default_account, gas: '5000000' })
-    .on('transactionHash', function (transactionHash) {
-        console.log("Transaction hash:", transactionHash);
-    })
-    .on('receipt', function (receipt) {
-        console.log(receipt);
-        // Call loop() function after the contract is deployed
-    })
-    .on('error', function (error) {
-        console.error(error);
-    })
-    .catch(function (error) {
-        console.error(error);
-    });
-
-console.log('reached');
-loop(contractInstance); // Pass contractInstance to loop
-return [default_account, account1, contractInstance];
+        .send({ from: default_account, gas: '5000000' })
+        .on('transactionHash', function (transactionHash) {
+            // console.log("Transaction hash:", transactionHash);
+        })
+        .on('receipt', function (receipt) {
+            // console.log(receipt);
+            // Call loop() function after the contract is deployed
+        })
+        .on('error', function (error) {
+            console.error(error);
+        })
+        .catch(function (error) {
+            console.error(error);
+        });
+    loop(account1, contractInstance); // Pass contractInstance to loop
+    return [default_account, account1, contractInstance];
 }
 
 async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
     // const action = ['transfer', 'approve', 'transferFrom'][Math.floor(Math.random() * 3)];
     const action = ['transfer', 'approve'][Math.floor(Math.random() * 2)];
-    const value = web3.utils.toWei(Math.floor(Math.random() * 1000).toString(), 'ether');
+    const value = web3.utils.toWei(Math.floor(Math.random() * 100).toString(), 'ether');
 
-    console.log(action)
+    const balance = await contractInstance.methods.balanceOf(accountFrom);
+    console.log(balance)
 
-    if (action === 'transfer') {
-        console.log("here")
-        const txHash = await web3.eth.personal.unlockAccount(accountFrom, addressToPassword.get(accountFrom), 60)
-            .then(() => {
-                contractInstance.methods.transfer(accountTo, value).send({ from: accountFrom });
-            })
-            .catch(console.error);
-    } else if (action === 'approve') {
-        console.log(83)
-        const txHash = await web3.eth.personal.unlockAccount(accountFrom, addressToPassword.get(accountFrom), 60)
-            .then(() => {
-                contractInstance.methods.approve(accountTo, value).send({ from: accountFrom });
-            })
-            .catch(console.error);
-    } else if (action === 'transferFrom') {
-        console.log(90)
-        const allowance = await contractInstance.methods.allowance(accountFrom, accountTo).call();
-        if (allowance > 0) {
-            const transferValue = BigInt(value) > BigInt(allowance) ? allowance : value;
-            const txHash = await contractInstance.methods.transferFrom(accountFrom, accountTo, transferValue).send({ from: account1 })
-                // returns the transaction hash
-                .on('transactionHash', (hash) => {
-                    return hash;
-                })
-        }
-    }
+    // console.log(action)
+
+    // console.log(accountFrom)
+    // console.log(accountTo)
+
+    // if (action === 'transfer') {
+    //     console.log("here")
+    //     const txHash = await web3.eth.personal.unlockAccount(accountFrom, addressToPassword.get(accountFrom), 60)
+    //         .then(() => {
+    //             contractInstance.methods.transfer(accountTo, value).send({ from: accountFrom });
+    //         })
+    //         .catch(console.error);
+    // } else if (action === 'approve') {
+    //     console.log(83)
+    //     const txHash = await web3.eth.personal.unlockAccount(accountFrom, addressToPassword.get(accountFrom), 60)
+    //         .then(() => {
+    //             contractInstance.methods.approve(accountTo, value).send({ from: accountFrom });
+    //         })
+    //         .catch(console.error);
+    // } else if (action === 'transferFrom') {
+    //     console.log(90)
+    //     const allowance = await contractInstance.methods.allowance(accountFrom, accountTo).call();
+    //     if (allowance > 0) {
+    //         const transferValue = BigInt(value) > BigInt(allowance) ? allowance : value;
+    //         const txHash = await contractInstance.methods.transferFrom(accountFrom, accountTo, transferValue).send({ from: account1 })
+    //             // returns the transaction hash
+    //             .on('transactionHash', (hash) => {
+    //                 return hash;
+    //             })
+    //     }
+    // }
 }
 
-async function loop(contractInstance) {
-    for (let i = 0; i < 10; i++) {
+async function loop(account1, contractInstance) {
+    for (let i = 0; i < 2; i++) {
         // fuzzUsdc now returns the transaction hash
         var txHash = await fuzzUsdc(default_account, account1, contractInstance);
         web3.eth.getTransaction(txHash, (error, tx) => {
