@@ -77,25 +77,24 @@ async function initialize() {
 
     const arguments = [web3.utils.toWei('10000', 'ether'), 'MyToken', 'MYT'];
     contractInstance = await usdcContract.deploy(options, arguments)
-        .send({ from: default_account, gas: '5000000' })
-        .on('transactionHash', function (transactionHash) {
-            console.log("Transaction hash:", transactionHash);
-        })
-        .on('receipt', function (receipt) {
-            console.log(receipt);
-            loop()
-        })
-        .on('error', function (error) {
-            console.error(error);
-        })
-        .catch(function (error) {
-            console.error(error);
-        });
+    .send({ from: default_account, gas: '5000000' })
+    .on('transactionHash', function (transactionHash) {
+        console.log("Transaction hash:", transactionHash);
+    })
+    .on('receipt', function (receipt) {
+        console.log(receipt);
+        // Call loop() function after the contract is deployed
+        loop(contractInstance); // Pass contractInstance to loop
+    })
+    .on('error', function (error) {
+        console.error(error);
+    })
+    .catch(function (error) {
+        console.error(error);
+    });
 
-    console.log('reached');
-    // Deploy the smart contract
-    // 0 gas?
-    return [default_account, account1]
+console.log('reached');
+return [default_account, account1, contractInstance];
 }
 
 async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
@@ -133,7 +132,7 @@ async function fuzzUsdc(accountFrom, accountTo, contractInstance) {
     }
 }
 
-async function loop() {
+async function loop(contractInstance) {
     for (let i = 0; i < 10; i++) {
         // fuzzUsdc now returns the transaction hash
         var txHash = await fuzzUsdc(default_account, account1, contractInstance);
