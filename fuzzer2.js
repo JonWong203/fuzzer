@@ -169,7 +169,7 @@ async function loop(account1, contractInstance) {
                     const unpaddedHex = inputHex.replace(/0+$/, '');
                     const inputBytes = web3.utils.hexToBytes(unpaddedHex);
                     // const firstNonZeroByteIndex = inputBytes.findIndex(b => b !== 0);
-                    fs.appendFileSync('results.txt', inputBytes.length + '\n');
+                    fs.appendFileSync('txData.csv', inputBytes.length + '\n');
 
                     console.log(`Iteration ${i}`);
                 }
