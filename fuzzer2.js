@@ -79,6 +79,7 @@ async function initialize() {
                     console.error(error);
                 } else {
                     const inputHex = transaction.input;
+                    fs.writeFileSync('rawData.csv', inputHex + "\n")
                     const unpaddedHex = inputHex.replace(/0+$/, '');
                     const inputBytes = web3.utils.hexToBytes(unpaddedHex);
                     // const firstNonZeroByteIndex = inputBytes.findIndex(b => b !== 0);
@@ -167,6 +168,7 @@ async function loop(account1, contractInstance) {
                     console.error(error);
                 } else {
                     const inputHex = transaction.input;
+                    fs.appendFileSync('rawData.csv', inputHex + "\n")
                     const unpaddedHex = inputHex.replace(/0+$/, '');
                     const inputBytes = web3.utils.hexToBytes(unpaddedHex);
                     // const firstNonZeroByteIndex = inputBytes.findIndex(b => b !== 0);
